@@ -50,7 +50,7 @@ appConfig:
   disableUpdateChecks: false
   disableSmartSort: false
   enableErrorReporting: false
-  footerText: ''
+  footerText: ""
 sections:
   - name: Getting Started
     icon: fas fa-rocket
@@ -89,10 +89,10 @@ sections:
         id: 5_1481_support
 pages:
   - name: Bookmarks
-    path: https://raw.githubusercontent.com/astr0n0mer/.dotfiles/main/.config/dashy/bookmarks.yml
+    path: https://raw.githack.com/astr0n0mer/.dotfiles/main/.config/dashy/bookmarks.yml
     displayData:
       hideForGuests: false
   - name: Work
-    path: https://raw.githubusercontent.com/astr0n0mer/.dotfiles/main/.config/dashy/work.yml
+    path: https://raw.githack.com/astr0n0mer/.dotfiles/main/.config/dashy/work.yml
     displayData:
       hideForGuests: true

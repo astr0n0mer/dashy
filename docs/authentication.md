@@ -14,6 +14,7 @@
   - [Deploying Keycloak](#1-deploy-keycloak)
   - [Setting up Keycloak](#2-setup-keycloak-users)
   - [Configuring Dashy for Keycloak](#3-enable-keycloak-in-dashy-config-file)
+  - [Toubleshooting Keycloak](#troubleshooting-keycloak)
 - [Alternative Authentication Methods](#alternative-authentication-methods)
   - [VPN](#vpn)
   - [IP-Based Access](#ip-based-access)
@@ -151,7 +152,7 @@ With basic auth, all logic is happening on the client-side, which could mean a s
 
 If you'd like to protect all your config files from direct access, you can set the `BASIC_AUTH_USERNAME` and `BASIC_AUTH_PASSWORD` environmental variables. You'll then be prompted to enter these credentials when visiting Dashy.
 
-Then, if you'd like your frontend to automatically log you in, without prompting you for credentials, then also specify `VUE_APP_BASIC_AUTH_USERNAME` and `VUE_APP_BASIC_AUTH_PASSWORD`. This is useful for when you're hosting Dashy on a private server, and you want to prevent unauthorized access to your config files, while still allowing the frontend to access them. Note that a rebuild is required for these changes to take effect.
+Then, if you'd like your frontend to automatically log you in, without prompting you for credentials (insecure, so only use on a trusted environment), then also specify `VUE_APP_BASIC_AUTH_USERNAME` and `VUE_APP_BASIC_AUTH_PASSWORD`. This is useful for when you're hosting Dashy on a private server, and just want to use auth for user management and to prevent direct access to your config files, while still allowing the frontend to access them. Note that a rebuild is required for these changes to take effect.
 
 **[⬆️ Back to Top](#authentication)**
 
@@ -250,6 +251,67 @@ Depending on how you're hosting Dashy and Keycloak, you may also need to set som
 Your app is now secured :) When you load Dashy, it will redirect to your Keycloak login page, and any user without valid credentials will be prevented from accessing your dashboard.
 
 From within the Keycloak console, you can then configure things like time-outs, password policies, etc. You can also backup your full Keycloak config, and it is recommended to do this, along with your Dashy config. You can spin up both Dashy and Keycloak simultaneously and restore both applications configs using a `docker-compose.yml` file, and this is recommended.
+
+---
+
+### Troubleshooting Keycloak
+
+If you encounter issues with your Keycloak setup, follow these steps to troubleshoot and resolve common problems.
+
+1. Client Authentication Issue
+Problem: Redirect loop, if client authentication is enabled.
+Solution: Switch off "client authentication" in "TC clients" -> "Advanced" settings.
+
+2. Double URL
+Problem: If you get redirected to "https://dashy.my.domain/#iss=https://keycloak.my.domain/realms/my-realm"
+Solution: Make sure to turn on "Exclude Issuer From Authentication Response" in "TC clients" -> "Advanced" -> "OpenID Connect Compatibility Modes"
+
+3. Problems with mutiple Dashy Pages
+Problem: Refreshing or logging out of dashy results in an "invalid_redirect_uri" error.
+Solution: In "TC clients" -> "Access settings" -> "Root URL" https://dashy.my.domain/, valid redirect URIs must be /*
+
+---
+
+## OIDC
+
+Dashy also supports using a general [OIDC compatible](https://openid.net/connect/) authentication server. In order to use it, the authentication section needs to be configured:
+
+```yaml
+appConfig:
+  auth:
+    enableOidc: true
+    oidc:
+      clientId: [registered client id]
+      endpoint: [OIDC endpoint]
+```
+
+Because Dashy is a SPA, a [public client](https://datatracker.ietf.org/doc/html/rfc6749#section-2.1) registration with PKCE is needed.
+
+An example for Authelia is shared below, but other OIDC systems can be used:
+
+```yaml
+identity_providers:
+  oidc:
+    clients:
+      - client_id: dashy
+        client_name: dashy
+        public: true
+        authorization_policy: 'one_factor'
+        require_pkce: true
+        pkce_challenge_method: 'S256'
+        redirect_uris:
+          - https://dashy.local # should point to your dashy endpoint
+        grant_types:
+          - authorization_code
+        scopes:
+          - 'openid'
+          - 'profile'
+          - 'roles'
+          - 'email'
+          - 'groups'
+```
+
+Groups and roles will be populated and available for controlling display similar to [Keycloak](#Keycloak) abvoe.
 
 ---
 
